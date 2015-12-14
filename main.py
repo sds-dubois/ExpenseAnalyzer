@@ -15,10 +15,9 @@ def join_comments(s1,s2):
             return(s1 + ', ' + s2)
 
 def prepare_data(filename,verbose=True):
-    df = pd.read_csv("../../Administratif/Comptes/"+filename,
-                       sep=',', encoding='latin1',parse_dates=['Date'], dayfirst=True,
-                       #index_col='Date'
-                       )
+    df = pd.read_csv(filename,
+                    sep=',', encoding='latin1',parse_dates=['Date'], dayfirst=True,
+                    )
 
     df['Etiquettes'] = df['Etiquettes'].replace(to_replace=np.nan,value='NA')
     df['Commentaires'] = df['Commentaires'].replace(to_replace=np.nan,value='NA')
