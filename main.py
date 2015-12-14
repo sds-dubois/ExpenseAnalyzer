@@ -59,9 +59,9 @@ def group_balance(data, group_idx, start_date=None, end_date=None, verbose=True)
     df = data['df']
     bow_descriptor = np.asarray(data['bow_descriptor'][:,group_idx])
     if(end_date is not None):
-        df_idx = df.index[np.any(bow_descriptor,axis=1) & np.asarray(df['Date'] > start_date) & np.asarray(df['Date'] < end_date)]
+        df_idx = df.index[np.any(bow_descriptor,axis=1) & np.asarray(df['Date'] >= start_date) & np.asarray(df['Date'] < end_date)]
     else:
-        df_idx = df.index[np.any(bow_descriptor,axis=1) & np.asarray(df['Date'] > start_date)]        
+        df_idx = df.index[np.any(bow_descriptor,axis=1) & np.asarray(df['Date'] >= start_date)]        
     group_expenses = df.loc[df_idx]['Montant']
 
     pos = np.sum(group_expenses[group_expenses>0])
@@ -76,9 +76,9 @@ def group_expenses(data, group_idx, start_date=None, end_date=None, verbose=True
     df = data['df']
     bow_descriptor = np.asarray(data['bow_descriptor'][:,group_idx])
     if(end_date is not None):
-        df_idx = df.index[np.any(bow_descriptor,axis=1) & np.asarray(df['Date'] > start_date) & np.asarray(df['Date'] < end_date)]
+        df_idx = df.index[np.any(bow_descriptor,axis=1) & np.asarray(df['Date'] >= start_date) & np.asarray(df['Date'] < end_date)]
     else:
-        df_idx = df.index[np.any(bow_descriptor,axis=1) & np.asarray(df['Date'] > start_date)]        
+        df_idx = df.index[np.any(bow_descriptor,axis=1) & np.asarray(df['Date'] >= start_date)]        
     group_expenses = df.loc[df_idx]['Montant']
 
     if(print_balance):
