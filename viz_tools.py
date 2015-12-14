@@ -38,10 +38,6 @@ def prepare_data(filename,verbose=True):
     if(verbose == True):
         print "Labels:",labels
 
-    # # For each label, add a column that indicates if the label appears in the description
-    # for l in labels:
-    #     df[l]= [1 if l in v else 0  for v in df['Etiquettes_list']]
-
     copy_comments = df['Description']
     # change token_pattern to take 1-letter words into account
     textVectorizer = CountVectorizer(vocabulary=labels, stop_words=None, token_pattern="(?u)\\b\\w+\\b")
@@ -52,10 +48,68 @@ def prepare_data(filename,verbose=True):
     dense_bow = bow.todense()
     label_co_occ = np.dot(np.transpose(dense_bow),dense_bow)
 
-    data = {'df': df, 'labels': labels, 'co_occ': label_co_occ, 'bow_descriptor': dense_bow}
+    data = {'df': df, 'labels': labels, 'co_occ': label_co_occ, 'bow_descriptor': dense_bow, 'labels_inv': textVectorizer.vocabulary_}
     return(data)
 
-def draw_graph(data, print_clusters=True, verbose=True):
+def group_indices(data,group_names):
+    labels_inv = data['labels_inv']
+    group_idx = [labels_inv[label] for label in group_names]
+    return(group_idx)
+
+def group_balance(data, group_idx, start_date=None, verbose=True):
+    if(verbose):
+        print 'Balance for group :', [str(data['labels'][i]) for i in group_idx]
+
+    df = data['df']
+    bow_descriptor = np.asarray(data['bow_descriptor'][:,group_idx])
+    df_idx = df.index[np.any(bow_descriptor,axis=1) & np.asarray(df['Date'] > start_date)]
+    group_expenses = df.loc[df_idx]['Montant']
+
+    pos = np.sum(group_expenses[group_expenses>0])
+    neg = np.sum(group_expenses[group_expenses<0])
+
+    return([pos,neg,pos+neg])
+
+def group_expenses(data, group_idx, start_date=None, end_date=None, verbose=True, print_balance=True, plot=False):
+    if(verbose):
+        print 'Expenses for group :', [str(data['labels'][i]) for i in group_idx]
+
+    df = data['df']
+    bow_descriptor = np.asarray(data['bow_descriptor'][:,group_idx])
+    if(end_date is not None):
+        df_idx = df.index[np.any(bow_descriptor,axis=1) & np.asarray(df['Date'] > start_date) & np.asarray(df['Date'] < end_date)]
+    else:
+        df_idx = df.index[np.any(bow_descriptor,axis=1) & np.asarray(df['Date'] > start_date)]        
+    group_expenses = df.loc[df_idx]['Montant']
+
+    if(print_balance):
+        pos = np.sum(group_expenses[group_expenses>0])
+        neg = np.sum(group_expenses[group_expenses<0])
+        print 'Gained:', pos, '\tSpent', neg, '\tTotal:', pos+neg
+
+    if(plot):
+        group_expenses.plot()
+        plt.show()
+
+    return(group_expenses)
+
+def cluster_details(data,cluster_labels, start_date=None, plot=False):
+    labels = data['labels']
+
+    clusters = []
+    nb_cluster = np.max(cluster_labels) +1
+    for c in range(nb_cluster):
+        print 'Cluster',c
+        labels_idx = []
+        labels_names = []
+        for i in range(len(labels)):
+            if(cluster_labels[i] == c):
+                labels_idx.append(i)
+                labels_names.append(labels[i])
+        clusters.append({'idx': labels_idx, 'lab': labels_names})
+        group_expenses(data,labels_idx, start_date=start_date, plot=plot)
+
+def draw_graph(data, verbose=True):
     df = data['df']
     labels = data['labels']
     bow_descriptor = data['bow_descriptor']
@@ -97,13 +151,6 @@ def draw_graph(data, print_clusters=True, verbose=True):
     nx.draw_networkx_nodes(net, graph_pos, nodelist=nodelist, node_size=net_sizes, node_color=cluster_labels, alpha=0.5)
     nx.draw_networkx_edges(net, edgelist=edgelist, pos=graph_pos)
     nx.draw_networkx_labels(net, graph_pos,labels=net_labels, font_size=12, font_family='sans-serif')
-
     plt.show()
-
-    if(print_clusters):
-        nb_cluster = np.max(cluster_labels) +1
-        for c in range(nb_cluster):
-            print('Cluster',c)
-            print([labels[i] for i in range(len(labels)) if ( cluster_labels[i] == c) ])
 
     return cluster_labels
