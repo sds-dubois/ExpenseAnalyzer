@@ -14,7 +14,7 @@ def join_comments(s1,s2):
         else:
             return(s1 + ', ' + s2)
 
-def prepare_data(filename,verbose=True):
+def prepare_data(filename,scale_similarities=False, verbose=True):
     df = pd.read_csv(filename,
                     sep=',', encoding='latin1',parse_dates=['Date'], dayfirst=True,
                     )
@@ -42,7 +42,13 @@ def prepare_data(filename,verbose=True):
         print 'Vocabulary',textVectorizer.vocabulary_
 
     dense_bow = bow.todense()
-    label_co_occ = np.dot(np.transpose(dense_bow),dense_bow)
+    label_co_occ = np.dot(np.transpose(dense_bow),dense_bow).astype(np.float)
+    if(scale_similarities):
+        scale = np.copy(np.diag(label_co_occ))
+        for i in range(label_co_occ.shape[0]):
+            label_co_occ[i,:] = label_co_occ[i,:] / np.sqrt(scale[i])
+        for j in range(label_co_occ.shape[0]):
+            label_co_occ[:,j] = label_co_occ[:,j] / np.sqrt(scale[j])
 
     data = {'df': df, 'labels': labels, 'co_occ': label_co_occ, 'bow_descriptor': dense_bow, 'labels_inv': textVectorizer.vocabulary_}
     return(data)
