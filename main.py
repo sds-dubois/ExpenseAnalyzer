@@ -52,13 +52,16 @@ def group_indices(data,group_names):
     group_idx = [labels_inv[label] for label in group_names]
     return(group_idx)
 
-def group_balance(data, group_idx, start_date=None, verbose=True):
+def group_balance(data, group_idx, start_date=None, end_date=None, verbose=True):
     if(verbose):
         print 'Balance for group :', [str(data['labels'][i]) for i in group_idx]
 
     df = data['df']
     bow_descriptor = np.asarray(data['bow_descriptor'][:,group_idx])
-    df_idx = df.index[np.any(bow_descriptor,axis=1) & np.asarray(df['Date'] > start_date)]
+    if(end_date is not None):
+        df_idx = df.index[np.any(bow_descriptor,axis=1) & np.asarray(df['Date'] > start_date) & np.asarray(df['Date'] < end_date)]
+    else:
+        df_idx = df.index[np.any(bow_descriptor,axis=1) & np.asarray(df['Date'] > start_date)]        
     group_expenses = df.loc[df_idx]['Montant']
 
     pos = np.sum(group_expenses[group_expenses>0])
@@ -89,13 +92,36 @@ def group_expenses(data, group_idx, start_date=None, end_date=None, verbose=True
 
     return(group_expenses)
 
-def cluster_details(data,cluster_labels, start_date=None, plot=False):
+def month_to_string(m):
+    month = str(m)
+    if(m < 10):
+        month = '0' + month
+    return(month)
+
+def group_monthly_analysis(data, group_idx, start_month=1, end_month=11):
+    res = [group_balance(data,group_idx,
+                        start_date='2015-'+month_to_string(m)+'-01',
+                        end_date='2015-'+month_to_string(m+1)+'-01',
+                        verbose=False)
+            for m in range(start_month,end_month+1)]
+    res = np.asarray(res)
+    print 'Group :', (' - ').join([str(data['labels'][i]) for i in group_idx])
+    plt.figure()
+    plt.title('Monthly balance')
+    plt.plot(range(start_month,end_month+1),res[:,2],c='blue')
+    plt.plot(range(start_month,end_month+1),res[:,0],c='green')
+    plt.plot(range(start_month,end_month+1),res[:,1],c='red')
+    plt.show()
+
+
+def cluster_details(data,cluster_labels, start_date=None, plot=False, verbose=True):
     labels = data['labels']
 
     clusters = []
     nb_cluster = np.max(cluster_labels) +1
     for c in range(nb_cluster):
-        print 'Cluster',c
+        if(verbose):
+            print 'Cluster',c
         labels_idx = []
         labels_names = []
         for i in range(len(labels)):
@@ -103,4 +129,7 @@ def cluster_details(data,cluster_labels, start_date=None, plot=False):
                 labels_idx.append(i)
                 labels_names.append(labels[i])
         clusters.append({'idx': labels_idx, 'lab': labels_names})
-        group_expenses(data,labels_idx, start_date=start_date, plot=plot)
+        if(verbose):
+            group_expenses(data,labels_idx, start_date=start_date, plot=plot)
+
+    return(clusters)
