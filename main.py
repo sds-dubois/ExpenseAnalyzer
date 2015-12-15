@@ -14,10 +14,16 @@ def join_comments(s1,s2):
         else:
             return(s1 + ', ' + s2)
 
-def prepare_data(filename,scale_similarities=False, verbose=True):
-    df = pd.read_csv(filename,
+def prepare_data(filenames, bank_names=None, scale_similarities=False, verbose=True):
+    all_df = [ pd.read_csv(f,
                     sep=',', encoding='latin1',parse_dates=['Date'], dayfirst=True,
-                    )
+                    ) for f in filenames ]
+    if(bank_names is not None):
+        for i in range(len(all_df)):
+            all_df[i]['Bank'] = bank_names[i]
+    df = pd.concat(all_df)
+    df.reset_index(inplace=True)
+    df.drop('index',axis=1,inplace=True)    
 
     df['Etiquettes'] = df['Etiquettes'].replace(to_replace=np.nan,value='NA')
     df['Commentaires'] = df['Commentaires'].replace(to_replace=np.nan,value='NA')
