@@ -104,24 +104,31 @@ def month_to_string(m):
         month = '0' + month
     return(month)
 
-def group_monthly_analysis(data, group_idx, start_month=1, end_month=11):
+def group_monthly_analysis(data, group_idx, start_month=1, end_month=11, fig_args=None):
     res = [group_balance(data,group_idx,
                         start_date='2015-'+month_to_string(m)+'-01',
                         end_date='2015-'+month_to_string(m+1)+'-01',
                         verbose=False)
             for m in range(start_month,end_month+1)]
     res = np.asarray(res)
-    print 'Group :', (' - ').join([str(data['labels'][i]) for i in group_idx])
-    plt.figure()
-    plt.title('Monthly balance')
-    plt.plot(range(start_month,end_month+1),res[:,2],c='blue')
-    plt.plot(range(start_month,end_month+1),res[:,0],c='green')
-    plt.plot(range(start_month,end_month+1),res[:,1],c='red')
-    plt.show()
+    # print 'Group :', (' - ').join([str(data['labels'][i]) for i in group_idx])
+    bar_width = 0.35
 
+    fig = fig_args['fig']
+    if(fig is None):
+        ax = plt.figure()
+    else:
+        ax = fig.add_subplot(fig_args['shape'][0],fig_args['shape'][1],fig_args['sub'])
+        ax.set_title(fig_args['title'])
+    ax.bar(np.arange(start_month,end_month+1),res[:,2], alpha = 0.5,width = bar_width, color='blue',label='Total')
+    ax.bar(np.arange(start_month,end_month+1)+ bar_width,res[:,0], alpha = 0.5,width = bar_width, color='green',label='Gained')
+    ax.bar(np.arange(start_month,end_month+1) + 2*bar_width,abs(res[:,1]), alpha = 0.5,width = bar_width, color='red',label='Spent')
+
+    return [np.mean(res[:,0]), np.mean(res[:,1]), np.mean(res[:,2])]
 
 def cluster_details(data,cluster_labels, start_date=None, plot=False, verbose=True):
     labels = data['labels']
+    diag = np.diag(data['co_occ'])
 
     clusters = []
     nb_cluster = np.max(cluster_labels) +1
@@ -134,7 +141,10 @@ def cluster_details(data,cluster_labels, start_date=None, plot=False, verbose=Tr
             if(cluster_labels[i] == c):
                 labels_idx.append(i)
                 labels_names.append(labels[i])
-        clusters.append({'idx': labels_idx, 'lab': labels_names})
+        name_idx = np.argmax(diag[labels_idx])
+        name = labels[labels_idx[name_idx]]
+        print name,':',labels_names
+        clusters.append({'idx': labels_idx, 'lab': labels_names, 'name': name})
         if(verbose):
             group_expenses(data,labels_idx, start_date=start_date, plot=plot)
 
