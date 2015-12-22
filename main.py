@@ -56,7 +56,16 @@ def prepare_data(filenames, bank_names=None, scale_similarities=False, verbose=T
         for j in range(label_co_occ.shape[0]):
             label_co_occ[:,j] = label_co_occ[:,j] / np.sqrt(scale[j])
 
-    data = {'df': df, 'labels': labels, 'co_occ': label_co_occ, 'bow_descriptor': dense_bow, 'labels_inv': textVectorizer.vocabulary_}
+    label_tot_expenses = []
+    for i in range(len(labels)):
+        idx = df.index[np.array(dense_bow[:,i])[:,0] == 1]
+        tot_expenses = np.sum(abs(df.loc[idx]['Montant']))
+        label_tot_expenses.append(tot_expenses)
+
+    data = {'df': df, 'labels': labels, 'co_occ': label_co_occ,
+            'bow_descriptor': dense_bow,
+            'labels_inv': textVectorizer.vocabulary_,
+            'label_expenses': np.asarray(label_tot_expenses)}
     return(data)
 
 def group_indices(data,group_names):
@@ -134,7 +143,7 @@ def group_monthly_analysis(data, group_idx, start_month=1, end_month=11, fig_arg
 
 def cluster_details(data,cluster_labels, start_date=None, plot=False, verbose=True):
     labels = data['labels']
-    diag = np.diag(data['co_occ'])
+    importance = data['label_expenses']
 
     clusters = []
     nb_cluster = np.max(cluster_labels) +1
@@ -147,7 +156,7 @@ def cluster_details(data,cluster_labels, start_date=None, plot=False, verbose=Tr
             if(cluster_labels[i] == c):
                 labels_idx.append(i)
                 labels_names.append(labels[i])
-        name_idx = np.argmax(diag[labels_idx])
+        name_idx = np.argmax(importance[labels_idx])
         name = labels[labels_idx[name_idx]]
         print name,':',labels_names
         clusters.append({'idx': labels_idx, 'lab': labels_names, 'name': name})
