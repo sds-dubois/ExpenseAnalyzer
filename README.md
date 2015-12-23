@@ -1,9 +1,10 @@
 # Expense Analyzer
-Python tools to analyze my expenses - *In development*
+Python tools to analyze my expenses - *In development*  
+Read the article [here](http://sds-dubois.github.io/2015/12/20/Analyzing-Daily-Expenses.html) for an introdction to the project.  
+
+----
 
 The analysis is done in the IPython Notebook `Viz`.  
-
-
 In the same directory, there must be a file named `config.py` which defines the variables:
 - `filenames` : a list of paths to the CSV files containing the data
 - `bank_names` : either None or a list of the bank names, in the same order as in `filenames`  
