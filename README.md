@@ -1,6 +1,6 @@
 # Expense Analyzer
 Python tools to analyze my expenses - *In development*  
-Read the article [here](http://sds-dubois.github.io/2015/12/20/Analyzing-Daily-Expenses.html) for an introdction to the project.  
+Read the article [here](http://sds-dubois.github.io/2015/12/20/Analyzing-Daily-Expenses.html) for an introduction to the project.  
 
 ----
 
